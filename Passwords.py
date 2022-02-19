@@ -7,41 +7,47 @@ import collections
 import itertools
 
 class Passwords:
-  def __init__(self, password_options):
+  def __init__(self, password_options, options_per_column):
     self.password_options = password_options
+    self.options_per_column = options_per_column
     self.password_length = max(map(len, self.password_options))
-
-  def letter_options_by_column(self):
-    """
-    Returns a nested list. Each item in the root list is a list of letters that can appear in that column. i.e. The first list is the letters that can show up in the first position, the second list is the letters that can appear in the second position, etc. Each list is sorted.
-    """
-    letter_options = []
+    # A nested list where each list is the letters that can appear in that column.
+    self.letter_options = []
     for column_number in range(self.password_length):
       options = set()
       for password in self.password_options:
         options.add(password[column_number])
-      letter_options.append(sorted(options))
-    return letter_options
+      self.letter_options.append(sorted(options))
+    # Debugging counters
+    self.total_combos_generated = 0
+    self.valid_combos_generated = 0
 
   def letter_frequencies_by_column(self):
     """
-    Returns a nested list. Each item in the root list is a list of strings, a single letter followed by the number of times that letter appears in that column. For instance, if the 3rd list starts with 'e7', that means the letter 'e' appears 7 times in the third position. The lists are sorted by most common letters first.
+    Prints a table of how many password have each letter in each column.
     """
     all_letter_counts = []
     for column_number in range(self.password_length):
       letters_in_column = map(lambda password: password[column_number], self.password_options)
       occurrences = collections.Counter(letters_in_column)
-      #letter_counts = sorted([letter + str(count) for (letter, count) in occurrences.items()])
       letter_counts = [letter + str(count) for (letter, count) in sorted(occurrences.items(), key=lambda pair: pair[1], reverse=True)]
       all_letter_counts.append(letter_counts)
-    return all_letter_counts
+    for row in itertools.zip_longest(*all_letter_counts, fillvalue='  '):
+      print('  '.join(row))
 
   def possible_words_from_letters_in_column(self, letters, column):
-    return list(filter(lambda word: word[column] in letters, self.password_options))
+    """
+    If you only know one column of letters (for example, the 6 letter choices in column 0), which passwords could be the correct one?
+    """
+    return [password for password in self.password_options if password[column] in letters]
 
   def average_possible_words_in_column(self, column=0):
-   options = self.letter_options_by_column()[column]
-   combinations = list(itertools.combinations(options, 6))
+   """
+   Assume you're given only one column of information (for example, the 6 possible letters in the first column). How many passwords could be the correct one?
+   This method takes every possible combination of letters in that column, counts how many passwords would be valid, and returns the average.
+   """
+   options = self.letter_options[column]
+   combinations = list(itertools.combinations(options, self.options_per_column))
    possible_combinations = len(combinations)
    total_possible_words = 0
    for possible_letters in combinations:
@@ -49,10 +55,12 @@ class Passwords:
    return total_possible_words / possible_combinations
 
   def average_possible_passwords_given_columns_one_and_two(self):
-    options_for_column_1 = self.letter_options_by_column()[0]
-    options_for_column_2 = self.letter_options_by_column()[1]
-    combinations_from_column_1 = list(itertools.combinations(options_for_column_1, 6))
-    combinations_from_column_2 = list(itertools.combinations(options_for_column_2, 6))
+    """
+    Iterate through every possible combiination of letters in column 1 and column 2. First make sure the combination is valid (there's at least one possible password). Here we're assuming there's some combination of values for the rest of the columns that would lead to exactly one correct results, as the game dictates.
+    Add the possible passwords for this combination to a total. Then, divide by the total number of valid combinations we checked. This is the average number of passwords you can narrow it down two given the possible letters from the first two columns.
+    """
+    combinations_from_column_1 = list(itertools.combinations(self.letter_options[0], 6))
+    combinations_from_column_2 = list(itertools.combinations(self.letter_options[1], 6))
     valid_combinations = 0
     total_possible_passwords = 0
     for column1 in combinations_from_column_1:
@@ -64,13 +72,15 @@ class Passwords:
     return total_possible_passwords / valid_combinations
 
   def get_valid_letter_combo(self):
-    letter_options = self.letter_options_by_column()
     while True:
-      options = [random.sample(letter_options[i], 6) for i in range(self.password_length)]
+      options = [random.sample(self.letter_options[i], self.options_per_column) for i in range(self.password_length)]
+      self.total_combos_generated += 1
       if len([password for password in self.password_options if all([password[i] in options[i] for i in range(self.password_length)])]) == 1:
+        self.valid_combos_generated += 1
         return options
 
   def average_possible_passwords_given_columns(self):
+    # TODO: keep track of which valid letter combos I've already tried and ignore exact repeats. Count how many times this actually comes up and what impact it has on time to execute.
     combinations_tested = 0
     total_possible_passwords = [0 for _ in range(self.password_length-1)]
     last_print = time.time()
@@ -96,8 +106,9 @@ class Passwords:
 
 
 if __name__ == "__main__":
-  standard_password_module = Passwords(["about", "after", "again", "below", "could", "every", "first", "found", "great", "house", "large", "learn", "never", "other", "place", "plant", "point", "right", "small", "sound", "spell", "still", "study", "their", "there", "these", "thing", "think", "three", "water", "where", "which", "world", "would", "write"])
+  standard_password_module = Passwords(["about", "after", "again", "below", "could", "every", "first", "found", "great", "house", "large", "learn", "never", "other", "place", "plant", "point", "right", "small", "sound", "spell", "still", "study", "their", "there", "these", "thing", "think", "three", "water", "where", "which", "world", "would", "write"], 6)
   standard_password_module.average_possible_passwords_given_columns()
+  print(f'Of {standard_password_module.total_combos_generated:,} generated letter combinations, only {standard_password_module.valid_combos_generated:,} were valid (having exactly one correct password), or {standard_password_module.valid_combos_generated / standard_password_module.total_combos_generated * 100:.2f}%.')
 
 """
 Simulation ~500,000 valid letter combinations: 
