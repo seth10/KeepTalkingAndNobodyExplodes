@@ -70,29 +70,34 @@ class Passwords:
       if len([password for password in self.password_options if all([password[i] in options[i] for i in range(self.password_length)])]) == 1:
         return options
 
-  def average_possible_passwords_given_columns(self, count=3):
-    valid_combinations = 0
-    total_possible_passwords = 0
+  def average_possible_passwords_given_columns(self):
+    combinations_tested = 0
+    total_possible_passwords = [0 for _ in range(self.password_length-1)]
     last_print = time.time()
+    print('Number of possible passwords given the first N columns of letter possibilities')
     while True:
       try:
+        options = self.get_valid_letter_combo()
+        possible_passwords = self.password_options
+        for column in range(len(total_possible_passwords)):
+          possible_passwords = [password for password in possible_passwords if password[column] in options[column]]
+          total_possible_passwords[column] += len(possible_passwords)
+        combinations_tested += 1
         if time.time() - last_print > 1:
           last_print = time.time()
-          sys.stdout.write(f'\rCombinations tried: {valid_combinations}, average possible passwords: {total_possible_passwords / valid_combinations}')
+          sys.stdout.write(f'\rCombinations tested: {combinations_tested}, 0: {len(self.password_options):.3f},  ')
+          for column in range(len(total_possible_passwords)):
+            sys.stdout.write(f'{column+1}: {total_possible_passwords[column] / combinations_tested:.3f},  ')
+          sys.stdout.write(f'{self.password_length}: {1:.3f}')
           sys.stdout.flush()
-        options = self.get_valid_letter_combo()
-        possible_passwords = len([password for password in self.password_options if all([password[i] in options[i] for i in range(count)])])
-        if possible_passwords > 0:
-          valid_combinations += 1
-          total_possible_passwords += possible_passwords
       except KeyboardInterrupt:
         print()
-        return total_possible_passwords / valid_combinations
+        return
 
 
 if __name__ == "__main__":
   standard_password_module = Passwords(["about", "after", "again", "below", "could", "every", "first", "found", "great", "house", "large", "learn", "never", "other", "place", "plant", "point", "right", "small", "sound", "spell", "still", "study", "their", "there", "these", "thing", "think", "three", "water", "where", "which", "world", "would", "write"])
-  print(standard_password_module.average_possible_passwords_given_columns(3))
+  standard_password_module.average_possible_passwords_given_columns()
 
 """
 Simulation ~500,000 valid letter combinations: 
