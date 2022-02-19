@@ -20,7 +20,7 @@ class Passwords:
 
   def letter_frequencies_by_column(self):
     """
-    Returns a nested list. Each item in the root list is a list of letters that can appear in that column. i.e. The first list is the letters that can show up in the first position, the second list is the letters that can appear in the second position, etc. Each list is sorted.
+    Returns a nested list. Each item in the root list is a list of strings, a single letter followed by the number of times that letter appears in that column. For instance, if the 3rd list starts with 'e7', that means the letter 'e' appears 7 times in the third position. The lists are sorted by most common letters first.
     """
     all_letter_counts = []
     for column_number in range(self.password_length):
