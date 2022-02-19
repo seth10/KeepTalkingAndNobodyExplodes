@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+import sys
+import time
+import random
 import collections
 import itertools
 
@@ -60,12 +63,34 @@ class Passwords:
           total_possible_passwords += possible_passwords
     return total_possible_passwords / valid_combinations
 
+  def average_possible_passwords_given_columns(self, count=3):
+    letter_options = self.letter_options_by_column()
+    valid_combinations = 0
+    total_possible_passwords = 0
+    last_print = time.time()
+    while True:
+      try:
+        if time.time() - last_print > 1:
+          last_print = time.time()
+          sys.stdout.write(f'\rCombinations tried: {valid_combinations}, average possible passwords: {total_possible_passwords / valid_combinations}')
+          sys.stdout.flush()
+        options = [random.sample(letter_options[i], 6) for i in range(count)]
+        possible_passwords = len([password for password in self.password_options if all([password[i] in options[i] for i in range(count)])])
+        if possible_passwords > 0:
+          valid_combinations += 1
+          total_possible_passwords += possible_passwords
+      except KeyboardInterrupt:
+        print()
+        return total_possible_passwords / valid_combinations
+
 
 if __name__ == "__main__":
   standard_password_module = Passwords(["about", "after", "again", "below", "could", "every", "first", "found", "great", "house", "large", "learn", "never", "other", "place", "plant", "point", "right", "small", "sound", "spell", "still", "study", "their", "there", "these", "thing", "think", "three", "water", "where", "which", "world", "would", "write"])
-  print(standard_password_module.average_possible_passwords_given_columns_one_and_two())
+  print(standard_password_module.average_possible_passwords_given_columns(3))
 
 """
+[Wrong] Given the first 3 columns of information, there are, on average, 3.47 possible passwords.
+
 Given a random set of 6 letters from column one and 6 from column two, there are 15,030,015 possibilities.
 Of those, 14,956,967 are possible (some combinations have 0 password options).
 On average, 6.0293 passwords will be possible.
