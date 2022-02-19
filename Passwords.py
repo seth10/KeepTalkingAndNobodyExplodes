@@ -63,8 +63,14 @@ class Passwords:
           total_possible_passwords += possible_passwords
     return total_possible_passwords / valid_combinations
 
-  def average_possible_passwords_given_columns(self, count=3):
+  def get_valid_letter_combo(self):
     letter_options = self.letter_options_by_column()
+    while True:
+      options = [random.sample(letter_options[i], 6) for i in range(self.password_length)]
+      if len([password for password in self.password_options if all([password[i] in options[i] for i in range(self.password_length)])]) == 1:
+        return options
+
+  def average_possible_passwords_given_columns(self, count=3):
     valid_combinations = 0
     total_possible_passwords = 0
     last_print = time.time()
@@ -74,7 +80,7 @@ class Passwords:
           last_print = time.time()
           sys.stdout.write(f'\rCombinations tried: {valid_combinations}, average possible passwords: {total_possible_passwords / valid_combinations}')
           sys.stdout.flush()
-        options = [random.sample(letter_options[i], 6) for i in range(count)]
+        options = self.get_valid_letter_combo()
         possible_passwords = len([password for password in self.password_options if all([password[i] in options[i] for i in range(count)])])
         if possible_passwords > 0:
           valid_combinations += 1
@@ -89,7 +95,13 @@ if __name__ == "__main__":
   print(standard_password_module.average_possible_passwords_given_columns(3))
 
 """
-[Wrong] Given the first 3 columns of information, there are, on average, 3.47 possible passwords.
+Simulation ~500,000 valid letter combinations: 
+Given the first 0 columns of information, there are, on average, 35.0 possible passwords.
+Given the first 1 columns of information, there are, on average, 14.07 possible passwords (should be 14 exactly).
+Given the first 2 columns of information, there are, on average, 6.19 possible passwords (should be 6.029303267166398 exactly).
+Given the first 3 columns of information, there are, on average, 3.49 possible passwords.
+Given the first 4 columns of information, there are, on average, 1.62 possible passwords.
+Given the first 5 columns of information, there are, on average, 1.0 possible passwords.
 
 Given a random set of 6 letters from column one and 6 from column two, there are 15,030,015 possibilities.
 Of those, 14,956,967 are possible (some combinations have 0 password options).
