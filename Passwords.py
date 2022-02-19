@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import collections
 import itertools
 
@@ -5,7 +7,7 @@ class Passwords:
   def __init__(self, password_options):
     self.password_options = password_options
     self.password_length = max(map(len, self.password_options))
-  
+
   def letter_options_by_column(self):
     """
     Returns a nested list. Each item in the root list is a list of letters that can appear in that column. i.e. The first list is the letters that can show up in the first position, the second list is the letters that can appear in the second position, etc. Each list is sorted.
@@ -33,32 +35,48 @@ class Passwords:
 
   def possible_words_from_letters_in_column(self, letters, column):
     return list(filter(lambda word: word[column] in letters, self.password_options))
-  
+
   def average_possible_words_in_column(self, column=0):
    options = self.letter_options_by_column()[column]
-   combinations = list(itertools.combinations(options, 5))
+   combinations = list(itertools.combinations(options, 6))
    possible_combinations = len(combinations)
    total_possible_words = 0
    for possible_letters in combinations:
      total_possible_words += len(self.possible_words_from_letters_in_column(possible_letters, column))
    return total_possible_words / possible_combinations
 
-
+  def average_possible_passwords_given_columns_one_and_two(self):
+    options_for_column_1 = self.letter_options_by_column()[0]
+    options_for_column_2 = self.letter_options_by_column()[1]
+    combinations_from_column_1 = list(itertools.combinations(options_for_column_1, 6))
+    combinations_from_column_2 = list(itertools.combinations(options_for_column_2, 6))
+    valid_combinations = 0
+    total_possible_passwords = 0
+    for column1 in combinations_from_column_1:
+      for column2 in combinations_from_column_2:
+        possible_passwords = len([password for password in self.password_options if password[0] in column1 and password[1] in column2])
+        if possible_passwords > 0:
+          valid_combinations += 1
+          total_possible_passwords += possible_passwords
+    return total_possible_passwords / valid_combinations
 
 
 if __name__ == "__main__":
   standard_password_module = Passwords(["about", "after", "again", "below", "could", "every", "first", "found", "great", "house", "large", "learn", "never", "other", "place", "plant", "point", "right", "small", "sound", "spell", "still", "study", "their", "there", "these", "thing", "think", "three", "water", "where", "which", "world", "would", "write"])
-  for i in range(5):
-    print(standard_password_module.average_possible_words_in_column(i))
-   
+  print(standard_password_module.average_possible_passwords_given_columns_one_and_two())
+
 """
-Number of combinations per column: 3003, 2002, 462, 2002, 462
-Average possible words per column:
-11.666666666666666
-12.5
-15.909090909090908
-12.5
-15.909090909090908
+Given a random set of 6 letters from column one and 6 from column two, there are 15,030,015 possibilities.
+Of those, 14,956,967 are possible (some combinations have 0 password options).
+On average, 6.0293 passwords will be possible.
+
+Number of combinations per column: 5005, 3003, 462, 3003, 462
+Average possible words per column (assuming 6 letter options in a column):
+14.0
+15.0
+19.09090909090909
+15.0
+19.09090909090909
 => Column one has the fewest possible words, then column two (tied with 4). The operator should give the expert the first two columns.
 
 t6  h8  e7  l6  e8
@@ -77,4 +95,3 @@ n1  m1      d1
 o1  p1      t1
 r1
 """
- 
